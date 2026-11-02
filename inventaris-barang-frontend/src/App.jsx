@@ -1,121 +1,206 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import DaftarBarang from './components/DaftarBarang.jsx'
+import FormTambahBarang from './components/FormTambahBarang.jsx'
+import Header from './components/Header.jsx'
+import RingkasanStok from './components/RingkasanStok.jsx'
+import Sidebar from './components/Sidebar.jsx'
 import './App.css'
 
+const dataAwal = [
+  {
+    id: 1,
+    nama: 'Sensor Ultrasonik HC-SR04',
+    kategori: 'Elektronik',
+    jumlah: 12,
+    kondisi: 'Baik',
+    lokasi: 'Lemari Robot A',
+    foto: '',
+  },
+  {
+    id: 2,
+    nama: 'Baterai LiPo 4S 5000mAh',
+    kategori: 'Elektronik',
+    jumlah: 4,
+    kondisi: 'Perlu Perbaikan',
+    lokasi: 'Kotak Penyimpanan Baterai',
+    foto: '',
+  },
+  {
+    id: 3,
+    nama: 'Solder Listrik 60W',
+    kategori: 'Perkakas',
+    jumlah: 3,
+    kondisi: 'Perlu Perbaikan',
+    lokasi: 'Meja Workshop',
+    foto: '',
+  },
+  {
+    id: 4,
+    nama: 'Proyektor Epson EB-X06',
+    kategori: 'Perlengkapan Kelas',
+    jumlah: 1,
+    kondisi: 'Baik',
+    lokasi: 'Ruang Sekretariat',
+    foto: '',
+  },
+  {
+    id: 5,
+    nama: 'Spidol Whiteboard Hitam',
+    kategori: 'Alat Tulis',
+    jumlah: 18,
+    kondisi: 'Baik',
+    lokasi: 'Rak Alat Tulis',
+    foto: '',
+  },
+  {
+    id: 6,
+    nama: 'Multimeter Digital',
+    kategori: 'Elektronik',
+    jumlah: 5,
+    kondisi: 'Rusak',
+    lokasi: 'Lemari Komponen A2',
+    foto: '',
+  },
+  {
+    id: 7,
+    nama: 'Kunci Pas Set 8-19 mm',
+    kategori: 'Perkakas',
+    jumlah: 2,
+    kondisi: 'Baik',
+    lokasi: 'Panel Perkakas',
+    foto: '',
+  },
+]
+
+const kategoriBarang = [
+  'Elektronik',
+  'Perkakas',
+  'Perlengkapan Kelas',
+  'Alat Tulis',
+]
+
 function App() {
-  const [count, setCount] = useState(0)
+  // State utama menyimpan data barang; state lain mengatur pencarian dan formulir.
+  const [daftarBarang, setDaftarBarang] = useState(dataAwal)
+  const [pencarian, setPencarian] = useState('')
+  const [filterKategori, setFilterKategori] = useState('')
+  const [filterKondisi, setFilterKondisi] = useState('')
+  const [sidebarTerbuka, setSidebarTerbuka] = useState(false)
+  const [temaGelap, setTemaGelap] = useState(false)
+  const [formTerbuka, setFormTerbuka] = useState(false)
+  const [barangDiedit, setBarangDiedit] = useState(null)
+  const [menuTerbukaId, setMenuTerbukaId] = useState(null)
+
+  const kataKunci = pencarian.trim().toLowerCase()
+  const daftarTerfilter = daftarBarang.filter((barang) => (
+    barang.nama.toLowerCase().includes(kataKunci)
+    && (!filterKategori || barang.kategori === filterKategori)
+    && (!filterKondisi || barang.kondisi === filterKondisi)
+  ))
+
+  const adaFilterAktif = Boolean(pencarian || filterKategori || filterKondisi)
+
+  function bukaFormTambah() {
+    setBarangDiedit(null)
+    setFormTerbuka(true)
+    setMenuTerbukaId(null)
+  }
+
+  function bukaFormEdit(barang) {
+    setBarangDiedit(barang)
+    setFormTerbuka(true)
+    setMenuTerbukaId(null)
+  }
+
+  function tutupForm() {
+    setFormTerbuka(false)
+    setBarangDiedit(null)
+  }
+
+  function simpanBarang(nilaiBarang) {
+    if (barangDiedit) {
+      setDaftarBarang((daftarSaatIni) => daftarSaatIni.map((barang) => (
+        barang.id === barangDiedit.id
+          ? { ...barang, ...nilaiBarang }
+          : barang
+      )))
+    } else {
+      setDaftarBarang((daftarSaatIni) => {
+        const idBaru = Math.max(
+          Date.now(),
+          ...daftarSaatIni.map((barang) => barang.id + 1),
+        )
+        return [...daftarSaatIni, { ...nilaiBarang, id: idBaru }]
+      })
+    }
+
+    tutupForm()
+  }
+
+  function hapusBarang(id) {
+    setDaftarBarang((daftarSaatIni) => daftarSaatIni.filter((barang) => barang.id !== id))
+    setMenuTerbukaId(null)
+  }
+
+  function hapusFilter() {
+    setPencarian('')
+    setFilterKategori('')
+    setFilterKondisi('')
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app-layout" data-theme={temaGelap ? 'dark' : 'light'}>
+      <Sidebar
+        kategoriBarang={kategoriBarang}
+        filterKategori={filterKategori}
+        onPilihKategori={setFilterKategori}
+        terbuka={sidebarTerbuka}
+        onTutup={() => setSidebarTerbuka(false)}
+      />
 
-      <div className="ticks"></div>
+      <main id="inventaris" className="content">
+        <Header
+          judul="Inventaris Barang"
+          subjudul="Kelola, pantau, dan organisasikan seluruh inventaris dalam satu tempat."
+          onTambah={bukaFormTambah}
+          onToggleMenu={() => setSidebarTerbuka(true)}
+          temaGelap={temaGelap}
+          onToggleTema={() => setTemaGelap((temaSaatIni) => !temaSaatIni)}
+        />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <RingkasanStok daftarBarang={daftarBarang} />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        <DaftarBarang
+          daftarBarang={daftarTerfilter}
+          totalBarang={daftarBarang.length}
+          pencarian={pencarian}
+          filterKategori={filterKategori}
+          filterKondisi={filterKondisi}
+          kategoriBarang={kategoriBarang}
+          adaFilterAktif={adaFilterAktif}
+          onPencarian={setPencarian}
+          onFilterKategori={setFilterKategori}
+          onFilterKondisi={setFilterKondisi}
+          onHapusFilter={hapusFilter}
+          onTambah={bukaFormTambah}
+          menuTerbukaId={menuTerbukaId}
+          onToggleMenu={(id) => setMenuTerbukaId((idSaatIni) => (
+            idSaatIni === id ? null : id
+          ))}
+          onEdit={bukaFormEdit}
+          onHapus={hapusBarang}
+        />
+
+        {formTerbuka && (
+          <FormTambahBarang
+            key={barangDiedit ? barangDiedit.id : 'barang-baru'}
+            barang={barangDiedit}
+            onSimpan={simpanBarang}
+            onTutup={tutupForm}
+          />
+        )}
+      </main>
+    </div>
   )
 }
 
